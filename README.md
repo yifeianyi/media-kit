@@ -228,6 +228,8 @@ python3.11 -m venv .venv
 .venv/bin/python tools/verify_distribution.py --python python3.11
 ```
 
+发行与定制验收脚本用 `uv build` 构建 wheel/sdist，需先安装 `uv`（CI 通过 `astral-sh/setup-uv` 提供）。
+
 源码组织：`src/media_kit/`（API、配置、存储、持久化、任务与转换）、`tests/`、`examples/`、`docs/`（离线文档唯一正文来源）、`tools/`（发行与定制验收）。修改源码前请阅读 [AGENTS.md](AGENTS.md) 与[源码开发](docs/development.md)；测试必须使用独立临时 `root`/`state_dir`，不读写真实媒体。
 
 ## 版本与兼容性

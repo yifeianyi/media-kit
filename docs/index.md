@@ -1,6 +1,6 @@
 # 文档索引
 
-这是与当前发行版本一起交付的离线文档。`media-kit docs --path` 定位安装副本；Python 可用 `from media_kit.documentation import docs_path, read_document, examples_path`。源码 `docs/` 是唯一权威正文，构建时复制进包资源。
+这是与当前发行版本一起交付的离线文档。`media-kit docs --path` 定位安装副本；Python 可用 `media_kit.documentation` 的 `docs_path()`、`examples_path()`、`read_document(name)` 与 `list_documents()`，其中 `list_documents()` 按稳定顺序返回全部离线手册文件名。源码 `docs/` 是唯一权威正文，构建时复制进包资源。
 
 | 任务 | 阅读入口 |
 | --- | --- |

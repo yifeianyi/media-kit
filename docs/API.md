@@ -35,7 +35,7 @@ AssetView 包含 asset_id、key、revision、status、original_path/URL、原图
 | `recover()` | 返回 recovered 完成数；存在未恢复文件操作时另有 failed 计数 | 可重复，保留失败待办，不接管未知外部文件；不得覆盖后续版本。该资产的 replace/rebuild/retry/delete 在冲突待办恢复前抛 StorageError，其他资产可继续使用 |
 | `cleanup()` | 回收 active 资产已被取代的历史 revision/配方登记文件，再销毁私有隔离文件，返回 complete/failed 操作计数 | 历史文件清理不可用作业务回滚；只处理尚未回收的登记文件。缺失或文件移动失败计入 failed 并保留待办，重复调用可重试；不根据外部业务引用删除 active 资产 |
 
-`source` 接受本地 Path 或二进制流；保存复制输入。key 是规范相对 POSIX 逻辑路径，扩展名与实际内容冲突会被拒绝。二进制流从当前支持的输入策略读取；不要在请求并发期间复用同一个可变流对象。原图成功后任何缩略图失败都不等于 save 没有发生。
+`source` 接受本地路径（`str` 或 `Path`）或二进制流；保存复制输入。key 是规范相对 POSIX 逻辑路径，扩展名与实际内容冲突会被拒绝。二进制流从当前支持的输入策略读取；不要在请求并发期间复用同一个可变流对象。原图成功后任何缩略图失败都不等于 save 没有发生。
 
 幂等键按同一 store 的操作类型隔离。请求摘要包括目标、expected_revision、源内容 hash、逻辑 key 和配方快照；同键不同请求抛 IdempotencyConflictError。同一成功 save 重放在资产后来被删除时仍返回原身份与可辨别当前状态，不创建新资产。业务数据库事务不参与包内提交，见[集成](integration.md)。
 
@@ -48,6 +48,8 @@ AssetView 包含 asset_id、key、revision、status、original_path/URL、原图
 `worker_once(asset_id=None)` 最多处理一档，返回 0 或处理数。`worker(once=False, poll_interval=1, stop_event=None)` 使用同一个持久执行器，持续模式等待后续任务，可用 stop_event 请求停止。CLI `worker --once` 持续调用 worker_once 到当前无可领取任务后退出，不等候别的 worker 的有效租约。
 
 独立转换入口 `convert_thumbnail(source, output_path, profile, config=None)`、`inspect_image(source, max_bytes=..., max_pixels=...)` 不初始化 store，不产生数据库/任务；输出不得覆盖输入。`TransformConfig` 管理 profile 与资源限额，`Profile`/`TransformRecipe` 管理输出参数。inspect_image 根据实际内容验证格式并完整解码以拒绝损坏，不只检查文件头；max_pixels 同时限制单帧像素和动画全部帧累计像素，随后缩略图转换仍只选首帧。转换先写完整临时文件，再原子发布；失败保留原图与既有成功结果。
+
+`format_capabilities()` 返回包声明支持的输入格式与当前 Pillow 的实际能力：键为 `JPEG/PNG/GIF/WEBP/AVIF`，值为含 `decode`、`encode` 布尔项的结构；本包只输出 WebP，因此 `encode` 仅对 WebP 可能为真。它不初始化存储，可在确定输入策略前用于显式能力检查。`convert_thumbnail` 返回 `TransformResult`，字段为 `path`（输出路径）、`size`（配方最长边）、`width`/`height`（实际像素）、`file_size`、`content_hash`（输出 SHA-256）与 `mime_type`。
 
 ## 错误类型
 

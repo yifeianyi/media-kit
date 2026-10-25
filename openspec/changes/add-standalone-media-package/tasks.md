@@ -60,7 +60,18 @@
 - [x] 7.5 按 `docs/customization.md` 修改一个转换规则并更新算法版本，执行测试、类型检查和构建；验证修改后的发行物能体现新行为且旧配方身份未被错误复用。
 - [x] 7.6 执行全套测试、lint、类型检查、构建和 OpenSpec 严格校验，记录支持的 Python/Pillow 范围与已知单机限制；验证所有需求场景有对应测试或可重复验收命令。
 
+## 8. 验证后续修正
+
+- [x] 8.1 补全离线文档的公开 API 覆盖：在 `docs/API.md` 说明 `format_capabilities` 的能力查询用法与 `TransformResult` 字段，在 `docs/configuration.md` 说明 `StoreConfig.from_mapping`，补充 `documentation.list_documents` 入口；验证离线文档可检索到 `media_kit.__all__` 的全部公开导出。
+- [x] 8.2 对齐文档与实现：WebP quality 接受范围为 0–100（当前文档写 1–100），`save`/`replace` 的 `source` 也接受 `str` 路径；`docs/upgrading.md` 的“来源记录”链接改指 `NOTICE.md`；验证文档链接检查与参数说明和代码一致。
+- [x] 8.3 补齐 `src/media_kit/storage/__init__.py`（带模块说明），使 `storage`/`persistence`/`tasks`/`transforms` 子包形态一致；验证 wheel/sdist 仍包含 storage 模块，pytest、ruff、mypy 通过。
+- [x] 8.4 扩展发行检查：`tools/distribution_checks.py` 的 sdist 期望资源包含 `README.en.md` 等根资源；重跑 `tools/verify_distribution.py`（wheel 与由 sdist 重建的安装）并验证两种发行物资源集合一致。
+- [x] 8.5 增加 `process()` 与独立 worker 并发接触同一请求的显式测试，直接覆盖 media-task-runtime“同步调用与 worker 同时执行”场景；验证最终只接受有效领取权的发布结果。
+- [x] 8.6 在 README、README.en.md 与 `docs/development.md` 注明发行/定制验收脚本需要已安装 `uv`；验证按文档命令可执行。
+- [x] 8.7 刷新本 change 的验证记录（`verification.md`）：更新离线资源数量、当前提交与重新执行的测试/lint/类型检查/发行验收结果；验证记录与最终实现一致。
+
 ## Workflow follow-up
 
 - 评审全部规划产物后，使用 `$openspec-apply-change (Codex) or /openspec-apply-change (other agents)` 开始实现。
 - 实施完成后，运行 `$openspec-verify-change (Codex) or /openspec-verify-change (other agents)`，再按发布要求创建本地提交；本 change 不包含远程发布或推送。
+- 完成第 8 节修正后，重新运行 `$openspec-verify-change (Codex) or /openspec-verify-change (other agents)` 并刷新本 change 的验证记录，再执行归档。

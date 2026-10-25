@@ -115,6 +115,7 @@ def archive_errors(archive: Path) -> list[str]:
             "setup.py",
             "MANIFEST.in",
             "README.md",
+            "README.en.md",
             "AGENTS.md",
             "NOTICE.md",
             "LICENSE",

@@ -32,7 +32,7 @@ openspec validate add-standalone-media-package --strict
 
 修改输出行为的版本责任和可执行步骤见[customization](customization.md)。维护 agent 也应读取源码根 AGENTS.md；接入项目的 agent 从[导航](agent-guide.md)开始。
 
-当前仓库具备 wheel/sdist 安装验收：
+当前仓库具备 wheel/sdist 安装验收；两个验收脚本都用 `uv build` 构建发行物，需先安装 `uv`（CI 通过 `astral-sh/setup-uv` 提供）：
 
 ```bash
 python tools/verify_distribution.py --python python3.11

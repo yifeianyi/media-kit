@@ -228,6 +228,8 @@ python3.11 -m venv .venv
 .venv/bin/python tools/verify_distribution.py --python python3.11
 ```
 
+The distribution and customization acceptance scripts build wheels/sdists with `uv build`; install `uv` first (CI provides it via `astral-sh/setup-uv`).
+
 Source layout: `src/media_kit/` (API, configuration, storage, persistence, tasks, transforms), `tests/`, `examples/`, `docs/` (the single authoritative source of documentation), and `tools/` (distribution and customization acceptance). Before changing source, read [AGENTS.md](AGENTS.md) and [Development](docs/development.md); tests must use isolated temporary `root`/`state_dir` directories and never touch real media.
 
 ## Versioning and compatibility

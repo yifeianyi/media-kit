@@ -16,7 +16,7 @@ from PIL import Image
 from media_kit.api import MediaStore
 from media_kit.config import StoreConfig
 from media_kit.errors import ProcessingError, StorageError
-from media_kit.models import Profile
+from media_kit.models import ProcessResult, Profile
 from media_kit.tasks import runtime
 
 
@@ -523,3 +523,63 @@ def test_stopped_worker_leaves_queue_pending_and_restart_continues_completed_res
         assert reopened.resolve(asset.asset_id).processing_status == "ready"
         assert reopened.local_path(completed.path).read_bytes() == completed_bytes
         assert reopened.worker(once=True) == 0
+
+
+def test_process_and_independent_worker_contend_for_one_lease(
+    store: MediaStore,
+    config: StoreConfig,
+    picture: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """同步等待与独立 worker 同时接触同一请求：共用租约，只有有效领取者发布。"""
+    asset = store.save(picture)
+    release = threading.Event()
+    original = runtime.convert_thumbnail
+
+    def blocked(*args, **kwargs):
+        if not release.wait(10):
+            raise RuntimeError("test did not release the blocked conversion")
+        return original(*args, **kwargs)
+
+    monkeypatch.setattr(runtime, "convert_thumbnail", blocked)
+    completed: list[ProcessResult] = []
+    failures: list[Exception] = []
+
+    def wait_for_result() -> None:
+        try:
+            completed.append(store.process(asset.asset_id, timeout=10))
+        except Exception as error:  # noqa: BLE001 - surface thread failures in the assertion
+            failures.append(error)
+
+    waiter = threading.Thread(target=wait_for_result, name="media-kit-sync-wait")
+    waiter.start()
+    try:
+        # The claim is committed before the blocked conversion, so polling the
+        # persisted task status is deterministic without a timing race.
+        deadline = time.monotonic() + 10
+        while time.monotonic() < deadline:
+            assert not failures, failures[0]
+            tasks = store.tasks(asset.asset_id)
+            if tasks and tasks[0].status == "running" and tasks[0].attempts == 1:
+                break
+            time.sleep(0.01)
+        else:
+            raise AssertionError("process() never claimed the pending task")
+        # The synchronous call's local executor holds the lease: an independent
+        # worker must not claim or publish the same request while it is valid.
+        with MediaStore.open(config) as other:
+            assert other.worker_once() == 0
+            assert other.worker_once(asset.asset_id) == 0
+        assert store.tasks(asset.asset_id)[0].attempts == 1
+    finally:
+        release.set()
+        waiter.join(timeout=10)
+    assert not waiter.is_alive()
+    assert not failures, failures[0]
+    assert len(completed) == 1 and not completed[0].timed_out
+    ready = store.resolve(asset.asset_id)
+    assert ready.processing_status == "ready"
+    tasks = store.tasks(asset.asset_id)
+    assert len(tasks) == 1 and tasks[0].attempts == 1 and tasks[0].status == "succeeded"
+    assert sum(variant.path is not None for variant in ready.variants) == 1
+    assert store.check().ok

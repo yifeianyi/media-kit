@@ -1,6 +1,6 @@
 # 配置
 
-Python 入口为 `StoreConfig`、`Profile`、`URLMapping`；TOML 入口为 `StoreConfig.from_toml(path)`。构造配置仅做校验，不初始化存储、不写入目录。
+Python 入口为 `StoreConfig`、`Profile`、`URLMapping`；TOML 入口为 `StoreConfig.from_toml(path)`，已有解析后字典时用 `StoreConfig.from_mapping(mapping)`（section 结构与 TOML 相同）。构造配置仅做校验，不初始化存储、不写入目录。
 
 ```toml
 [storage]
@@ -53,7 +53,7 @@ name = "large"
 size = 1600
 ```
 
-profile 名唯一，是安全的单路径段，允许字母、数字、点、下划线和连字符；最长 64 字符。size 必须为正，WebP quality 为 1–100，method 为 0–6；首版输出仅 WebP。字节/像素限制必须为正，默认最大 20 MiB、4000 万像素。max_pixels 同时约束单帧像素与动画所有帧的累计像素；动画最终只生成首帧缩略图，输入校验仍完整解码全部帧以识别损坏和控制资源。JPEG、PNG、GIF、WebP 为默认输入；AVIF 取决于当前 Pillow 的实际解码能力，能力不足必须报输入错误。
+profile 名唯一，是安全的单路径段，允许字母、数字、点、下划线和连字符；最长 64 字符。size 必须为正，WebP quality 为 0–100，method 为 0–6；首版输出仅 WebP。字节/像素限制必须为正，默认最大 20 MiB、4000 万像素。max_pixels 同时约束单帧像素与动画所有帧的累计像素；动画最终只生成首帧缩略图，输入校验仍完整解码全部帧以识别损坏和控制资源。JPEG、PNG、GIF、WebP 为默认输入；AVIF 取决于当前 Pillow 的实际解码能力，能力不足必须报输入错误。
 
 磁盘布局在初始化时记录。打开现有实例时修改 root 对应布局、state_dir 对应身份、original_dir 或 variant_dir 会被拒绝，不搬移文件。重新部署时须成套恢复 root 与 state_dir，并用只读 check 校验；不要用修改配置代替迁移。
 
