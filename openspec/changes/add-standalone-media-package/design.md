@@ -154,7 +154,9 @@ SQLite 表围绕 `assets`、`revisions`、`variant_requests`、`variants`、`tas
 
 ### 8. 删除完成意味着源站公开文件已移除
 
-资产公开状态为 `active -> deleting -> deleted`。删除先持久化不可逆的撤销决策，检查预期 revision，取消待执行任务并阻止新发布；解析立即停止返回该资产地址。之后将原图和变体的整个资产子树原子移入同文件系统私有隔离区。所有受管 revision 均已移出公开目录后，才记录 `deleted`。失败保留 `deleting` 和错误/待办，重试或启动恢复继续推进；API 不将部分移除报告为完成。
+资产公开状态为 `active -> deleting -> deleted`。删除先持久化不可逆的撤销决策，检查预期 revision，取消待执行任务并阻止新发布；解析立即停止返回该资产地址。之后按 SQLite 登记且尚未回收的具体原图/变体文件生成持久清单，逐文件原子移入同文件系统私有隔离区，仅移除空父目录并保留相邻未知文件。所有受管 revision 均已移出公开目录后，才记录 `deleted`。失败保留 `deleting` 和错误/待办，重试或启动恢复识别自己的隔离目标后继续推进；源与隔离目标冲突或两处均缺失不会伪报完成。
+
+历史回收遵守相同文件登记边界，清理已被替换的 revision 和配方，不承担业务备份职责。已回收记录不再拥有该公开路径，后续出现的同路径文件不得自动复用或删除。回收待办失败时暂停该资产的冲突写操作，防止重新启用的配方被旧回收意图删除；其他资产继续工作。损坏变体重试保留文件登记，直到重新发布或隔离成功。
 
 隔离区物理销毁使用独立 `pending/complete/failed` 清理状态，允许后台重试。重复删除或已删除对象返回同一删除结果。新的资产即使复用逻辑 key，也使用新 ID，因此旧任务不能命中新文件。
 
@@ -201,7 +203,7 @@ CLI 提供 `init`、`worker`、`status`、`check`、`recover`、`retry`、`rebui
 
 ## Migration Plan
 
-实施记录：目标主线为 `main`；集成分支与 OpenSpec change 同名 `add-standalone-media-package`；集成 worktree 路径为 `/home/yifeianyi/Desktop/add-standalone-media-package`。本次 apply 将先在主线独立提交全部规划产物，再从该提交建立集成 worktree；主线提交 hash 在 worktree 准备后写入 tasks.md。
+实施记录：目标主线为 `main`；Proposal 提交为 `0b76554202e79a3de5274612a103f02e8277d576`（`docs(media-kit): 提交独立媒体包实施提案`）；集成分支与 OpenSpec change 同名 `add-standalone-media-package`，集成 worktree 路径为 `/home/yifeianyi/Desktop/add-standalone-media-package`，基于上述 Proposal 提交创建。实现及阶段提交在集成分支进行，验收后快进合回 `/home/yifeianyi/Desktop/media-kit` 的 `main`，保留分支并移除集成 worktree。
 
 1. 在本独立目录实现包骨架与测试配置；参考项目保持为只读材料，不建立安装依赖或回迁步骤。
 2. 实现空实例初始化、保存和查询，再接入转换、持久任务及生命周期恢复；所有状态格式从版本 1 开始。
