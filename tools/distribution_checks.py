@@ -24,7 +24,14 @@ DOCUMENTS = (
     "agent-guide.md",
 )
 EXAMPLES = ("lifecycle.py", "convert.py", "static_server.py")
-ROOT_RESOURCES = ("README.md", "AGENTS.md", "NOTICE.md", "LICENSE", "py.typed")
+ROOT_RESOURCES = (
+    "README.md",
+    "README.en.md",
+    "AGENTS.md",
+    "NOTICE.md",
+    "LICENSE",
+    "py.typed",
+)
 _LINK = re.compile(r"!?\[[^\]]*\]\((<[^>]+>|[^\s)]+)(?:\s+['\"][^)]*)?\)")
 _REFERENCE = re.compile(r"^\s*\[[^\]]+\]:\s*(<[^>]+>|\S+)", re.MULTILINE)
 

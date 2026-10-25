@@ -27,11 +27,12 @@ class ResourceBuildPy(build_py):
                 target,
                 ignore=shutil.ignore_patterns("__pycache__", "*.py[cod]"),
             )
-        for filename in ("README.md", "AGENTS.md", "NOTICE.md", "LICENSE"):
+        for filename in ("README.md", "README.en.md", "AGENTS.md", "NOTICE.md", "LICENSE"):
             shutil.copy2(source / filename, destination / filename)
         resources = [destination / "py.typed"]
         resources.extend(
-            destination / name for name in ("README.md", "AGENTS.md", "NOTICE.md", "LICENSE")
+            destination / name
+            for name in ("README.md", "README.en.md", "AGENTS.md", "NOTICE.md", "LICENSE")
         )
         for directory in ("docs", "examples"):
             resources.extend(
